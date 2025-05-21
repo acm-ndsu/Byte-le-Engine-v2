@@ -11,7 +11,10 @@ def verify_code(filename: str) -> ([], bool, bool):
     with open(filename, 'r') as f:
         contents = f.read()
 
-    contents = contents.splitlines()
+    # Use regex to exclude comments from flagging a base_client.py file as invalid
+    contents = re.sub(
+        "#.*$|\"\"\"[\\S\\s]*?\"\"\"|'''[\\S\\s]*?'''|\"[^\"].*?[^\\\\]\"|'[^'].*?[^\\\\]'", "", contents
+    ).splitlines()
 
     illegal_imports = list()
     uses_open = False
