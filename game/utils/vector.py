@@ -96,6 +96,12 @@ class Vector(GameObject):
     def from_yx_tuple(yx_tuple: Tuple[int, int]) -> 'Vector':
         return Vector(*yx_tuple[::-1])
 
+    @staticmethod
+    def add_vectors(vector_1: 'Vector', vector_2: 'Vector') -> 'Vector':
+        new_x: int = vector_1.x + vector_2.x
+        new_y: int = vector_1.y + vector_2.y
+        return Vector(new_x, new_y)
+
     def add_to_vector(self, other_vector: Self) -> 'Vector':
         return Vector(
             self.x + other_vector.x,
