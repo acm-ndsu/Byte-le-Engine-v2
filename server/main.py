@@ -75,9 +75,12 @@ def run_with_return_to_client(func: Callable) -> Callable:
         """
         try:
             return func(*args, **kwargs)
+        # keep the status code if e was originally an HTTPException
+        except HTTPException as e:
+            raise e
+        # otherwise default to 500 since the error WAS serverside
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
+            raise HTTPException(500, str(e))
     return wrapper
 
 
@@ -150,8 +153,8 @@ def get_submission(submission_id: int, team_uuid: str, db: Session = Depends(get
     submission_list: list[Submission] | None = crud_submission.read_all_W_filter(
         db, submission_id=submission_id, team_uuid=team_uuid)
 
-    if submission_list is None:
-        raise HTTPException(status_code=404, detail="Submission not found!")
+    if submission_list is None or len(submission_list) == 0:
+        raise HTTPException(404, "Submission not found!")
 
     return submission_list[0]  # returns a single SubmissionSchema to give the submission data to the user
 
@@ -176,8 +179,8 @@ def get_runs(tournament_id: int, team_uuid: str | None = None, db: Session = Dep
                                                              submission_run.submission is not None else None for
                                                              submission_run in run.submission_run_infos]]
 
-    if run_list is None:
-        raise HTTPException(status_code=404, detail="Run not found D:")
+    if run_list is None or len(run_list) == 0:
+        raise HTTPException(404, "Run not found D:")
 
     return run_list
 
@@ -244,7 +247,7 @@ def get_tournaments(db: Session = Depends(get_db)):
     temp: list[Tournament] = crud_tournament.read_all(db)
 
     if len(temp) == 0:
-        raise Exception('No tournaments found.')
+        raise HTTPException(404, 'No tournaments found.')
 
     return temp
 
@@ -262,7 +265,7 @@ def get_tournament(tournament_id: int, db: Session = Depends(get_db)):
     temp: Tournament = crud_tournament.read(db, tournament_id, eager=True)
 
     if temp is None:
-        raise Exception('No tournaments found.')
+        raise HTTPException(404, 'No tournaments found.')
 
     return temp
 
@@ -278,7 +281,7 @@ def get_latest_tournament(db: Session = Depends(get_db)):
     temp: Tournament = crud_tournament.get_latest_tournament(db)
 
     if temp is None:
-        raise Exception('No tournaments found.')
+        raise HTTPException(404, 'No tournaments found.')
 
     return temp
 
